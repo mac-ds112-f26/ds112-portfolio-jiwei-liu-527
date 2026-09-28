@@ -516,6 +516,9 @@ ggplot(elections_by_state, aes(x = repub_pct_20, y = state_abbr)) +
 # Reorder the states in terms of their 2020 Republican support (not alphabet)
 # Scroll to solutions below when you're ready
 
+ggplot(elections_by_state, aes(x = repub_pct_20, y = fct_reorder(state_abbr, repub_pct_20))) + 
+  geom_point(color = "red")
+
 
 ```
 
