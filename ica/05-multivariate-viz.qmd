@@ -23,14 +23,15 @@ A codebook is provided by Danny Kaplan who also made these data accessible:
 Construct a plot of how the average `sat` scores vary across states (**HINT**: you need to use the `sat` variable only).
 
 ```{r}
-
+ggplot(education, aes(x = sat)) + 
+  geom_density()
 ```
 
 ### ✏️ Summarize SAT Distribution
 
 Summarize your observations from the plot. Comment on the basics: range, typical outcomes, shape. (Any theories about what might explain this non-normal shape?)
 
-
+average SAT scores range from roughly 800 to 1100. They appear bi-modal.
 
 ### ✏️ Plot SAT vs Spending
 
@@ -39,7 +40,9 @@ The first question we'd like to answer is: Can the variability in `sat` scores f
 ```{r}
 # Construct a plot of sat vs expend
 # Include a "best fit linear regression model" (HINT: method = "lm")
-
+ggplot(education, aes(y = sat, x = expend)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
 ```
 
 
@@ -48,13 +51,16 @@ The first question we'd like to answer is: Can the variability in `sat` scores f
 ```{r}
 # Construct a plot of sat vs salary
 # Include a "best fit linear regression model" (HINT: method = "lm")
-
+ggplot(education, aes(y = sat, x = salary)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
 ```
 
 ### ✏️ Describe Spending Trends
 
 What are the relationship trends between SAT scores and spending? Is there anything that surprises you?
 
+The higher the student expenditures and teacher salaries, the worse the SAT performance.
 
 ## Trivariate Viz
 
@@ -63,7 +69,9 @@ What are the relationship trends between SAT scores and spending? Is there anyth
 Construct *one* visualization of the relationship of `sat` with `salary` *and* `expend`. HINT: Start with just 2 variables and tweak that code to add the third variable. Try out a few things!
 
 ```{r}
-
+ggplot(education, aes(y = sat, x = salary, color = expend)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
 ```
 
 
@@ -75,7 +83,7 @@ It can be tough to distinguish color scales and size scales for quantitative var
 Construct the plot below. Check out the code and think about what's happening here. What happens if you change "2" to "3"?
 
 ```{r}
-ggplot(education, aes(y = sat, x = salary, color = cut(expend, 2))) + 
+ggplot(education, aes(y = sat, x = salary, color = cut(expend, 3))) + 
   geom_point() + 
   geom_smooth(se = FALSE, method = "lm")
 ```
@@ -84,6 +92,7 @@ ggplot(education, aes(y = sat, x = salary, color = cut(expend, 2))) +
 
 Describe the trivariate relationship between `sat`, `salary`, and `expend`.
 
+States with lower salaries and expenditures tend to have higher SAT scores.
 
 ## Simpson's Paradox
 
@@ -94,7 +103,8 @@ It's strange that SAT scores *seem* to decrease with spending. But we're leaving
 Build a univariate viz of `fracCat` to better understand how many states fall into each category.
 
 ```{r}
-
+ggplot(education, aes(x = fracCat)) + 
+  geom_bar()
 ```
 
 ### ✏️ Relate SAT to Participation
@@ -102,7 +112,8 @@ Build a univariate viz of `fracCat` to better understand how many states fall in
 Build 2 bivariate visualizations that demonstrate the relationship between `sat` and `fracCat`. What story does your graphic tell and why does this make contextual sense?
 
 ```{r}
-
+ggplot(education, aes(x = sat, fill = fracCat)) + 
+  geom_density(alpha = 0.5)
 ```
 
 ### ✏️ Add Participation to Spending Plot
