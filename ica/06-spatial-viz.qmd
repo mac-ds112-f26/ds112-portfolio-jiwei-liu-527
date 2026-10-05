@@ -64,8 +64,6 @@ library(tidyverse)
 
 
 ```{r}
-#| eval: false
-
 fave_places <- read.csv("https://hash-mac.github.io/ds112site-f26/data/our_fave_places.csv")
 
 # Check it out
@@ -340,16 +338,18 @@ Adjust the code below to make the plot!
 Remove the `#` to run it.
 
 ```{r}
-# ggplot(___) + 
-#   geom___() + 
-#   geom___(
-#     data = ___,
-#     aes(x = ___, y = ___),
-#     alpha = 0.7,
-#     size = 0.2, 
-#     color = 'darkgreen'
-#   ) + 
-#   theme_map()
+ggplot(midwest_boundaries) +
+  geom_sf() +
+  geom_point(
+    data = starbucks_midwest,
+    aes(x = Longitude, y = Latitude),
+    alpha = 0.7,
+    size = 0.2,
+    color = 'darkgreen'
+  ) +
+  theme_map()
+
+
 ```
 
 ### ✏️ Build Contour Maps
@@ -535,7 +535,7 @@ ggplot(elections_by_state, aes(map_id = state_name, fill = repub_20_categories))
 ### ✏️ Name Choropleth Geom
 
 We used `geom_sf()` for point maps.
-What `geom` do we use for choropleth maps?
+What `geom` do we use for choropleth maps? geom_map()
 
 ### ✏️ Map Counties with Choropleth
 
@@ -594,7 +594,13 @@ ggplot(elections_by_counties, aes(map_id = county_fips, fill = repub_20_categori
 Construct a county-level map of `median_rent`.
 
 ```{r}
-
+ggplot(elections_by_counties, aes(map_id = county_fips, fill = median_rent)) +
+  geom_map(map = county_map) +
+  expand_limits(x = county_map$long, y = county_map$lat) +
+  theme_map() +
+  theme(legend.position = "right") + 
+  coord_equal() + 
+  scale_fill_gradientn(name = "median rent", colors = c("white", "lightgreen", "darkgreen"))
 ```
 
 
@@ -603,7 +609,13 @@ Construct a county-level map of `median_rent`.
 Construct a county-level map of `median_age`.
 
 ```{r}
-
+ggplot(elections_by_counties, aes(map_id = county_fips, fill = median_age)) +
+  geom_map(map = county_map) +
+  expand_limits(x = county_map$long, y = county_map$lat) +
+  theme_map() +
+  theme(legend.position = "right") + 
+  coord_equal() + 
+  scale_fill_gradientn(name = "median age", colors = terrain.colors(10))
 ```
 
 ### ✏️ Build Choropleth with Leaflet
