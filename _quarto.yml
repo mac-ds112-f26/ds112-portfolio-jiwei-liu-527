@@ -80,6 +80,7 @@ book:
       - ica/quarto-demo1.qmd
       - ica/04-bivariate-viz-exercises.qmd
       - ica/05-multivariate-viz.qmd
+      - ica/06-spatial-viz.qmd
 
     - part: "Extras"
       chapters:

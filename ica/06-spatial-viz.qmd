@@ -58,6 +58,9 @@ The general steps are as follows:
 Earlier this semester, I asked for the latitude and longitude of one of your favorite places.
 I rounded these to the nearest whole number, so that they're near to but not exactly at those places.
 Let's load [the data](../data/our_fave_places.csv) and map it!
+```{r}
+library(tidyverse)
+```
 
 
 ```{r}
@@ -68,17 +71,6 @@ fave_places <- read.csv("https://hash-mac.github.io/ds112site-f26/data/our_fave_
 # Check it out
 head(fave_places)
 ```
-
-```{r}
-#| echo: false
-
-fave_places <- read.csv("../data/our_fave_places.csv")
-
-# Check it out
-head(fave_places)
-```
-
-
 You can use a "two-finger scroll" to zoom in and out.
 
 ```{r}
@@ -182,6 +174,12 @@ starbucks_mn <- starbucks |>
 Create a leaflet map of the Starbucks locations in Minnesota.
 Keep it simple -- go back to ✏️ Map Points with Leaflet for an example.
 
+```{r}
+leaflet(data = starbucks_mn) |> 
+  addTiles() |> 
+  addMarkers()
+```
+
 ## Static Points
 
 Leaflet is very powerful and fun.
@@ -204,7 +202,8 @@ It's pretty cool that the plots we already know can provide some spatial context
 But what *don't* you like about this plot?
 
 ```{r}
-
+ggplot(starbucks, aes(y = Latitude, x = Longitude)) + 
+  geom_point(size = 0.5)
 ```
 
 ### ✏️ Add Country Background
