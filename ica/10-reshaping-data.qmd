@@ -255,6 +255,8 @@ The data associated with [this article](https://fivethirtyeight.com/datalab/ever
 library(fivethirtyeight)
 data("daily_show_guests")
 daily <- daily_show_guests
+
+head(daily)
 ```
 
 In analyzing this data, you'll need to determine if and when the data needs to be reshaped.
@@ -262,7 +264,9 @@ In analyzing this data, you'll need to determine if and when the data needs to b
 Identify the 15 guests that appeared the most. (This isn't a very diverse guest list!)
 
 ```{r}
-
+daily |>
+  count(raw_guest_list, sort = TRUE) |>
+  head(15)
 ```
 
 ### ✏️ Build Appearances Table
@@ -276,7 +280,23 @@ CHALLENGE: Create the following data set containing 19 columns:
 There are hints below (if you scroll), but you're encouraged to play around and use as few hints as possible.
 
 ```{r}
+appearances <- daily |>
+  count(raw_guest_list, year) |>
+  group_by(raw_guest_list) |>
+  mutate(total = sum(n)) |>
+  ungroup() |>
+  pivot_wider(
+    names_from = year,
+    values_from = n,
+    values_fill = 0,
+    names_sort = TRUE
+  ) |>
+  arrange(desc(total)) |>
+  head(15) |>
+  select(-total, total)
 
+appearances
+dim(appearances)
 ```
 
 HINTS: There are lots of ways to do this. You don't necessarily need all of these hints.
@@ -311,5 +331,18 @@ plot_data <- daily |>
 Now, using the `broad_group` variable in `plot_data`, recreate the graphic from the article, with three different lines showing the fraction of guests in each group over time. Note: You'll have to wrangle the data first.
 
 ```{r}
+yearly_groups <- plot_data |>
+  count(year, broad_group) |>
+  group_by(year) |>
+  mutate(fraction = n / sum(n)) |>
+  ungroup()
 
+ggplot(yearly_groups,
+       aes(x = year, y = fraction, color = broad_group)) +
+  geom_line() +
+  labs(
+    x = "Year",
+    y = "Fraction of guest appearances",
+    color = "Guest group"
+  )
 ```
