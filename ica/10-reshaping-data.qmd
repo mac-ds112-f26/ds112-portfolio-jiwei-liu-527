@@ -13,24 +13,25 @@ Consider data on a sleep study in which subjects received only 3 hours of sleep 
 
 ```{r}
 sleep_wide <- read.csv("https://mac-stat.github.io/data/sleep_wide.csv")
-
+library(tidyverse)
 head(sleep_wide)
 ```
 
 What are the units of observation in `sleep_wide`?
+The units of observation are individual subjects in the sleep study. Each row represents one subject, with reaction times on different days stored in separate columns.
 
 ### ✏️ Sketch Long Data
 
 Suppose I ask you to plot each subject's reaction time (y-axis) vs the number of days of sleep restriction (x-axis). "Sketch" out in words what the first few rows of the data need to look like in order to do this. It might help to think about what you'd need to complete the plotting frame:
 
-`ggplot(___, aes(y = ___, x = ___, color = ___))`
+`ggplot(sleep_long, aes(x = day, y = reaction_time, color = Subject))`
 
 ### ✏️ Choose Reshape Tool
 
 How can you obtain the dataset you sketched in ✏️ Sketch Long Data?
 
 -   just using `sleep_wide`
--   `pivot_longer()`
+-   `pivot_longer()` ✅
 -   `pivot_wider()`
 
 
@@ -48,10 +49,20 @@ Use `pivot_longer()` to create the long-format dataset above. Show the first 3 l
 
 ```{r}
 # For cols, try 2 approaches: using - and starts_with
-# ___ |>
-#   pivot_longer(cols = ___, names_to = "___", values_to = "___")
+sleep_wide |>
+  pivot_longer(cols = -Subject, names_to = "day", values_to = "reaction_time") |>
+  head(3)
 ```
-
+```{r}
+sleep_wide |>
+  pivot_longer(
+    cols = starts_with("day_"),
+    names_to = "day",
+    values_to = "reaction_time"
+  ) |>
+  head(3)
+```
+I would remove the “day_” prefix and convert day to a numeric variable. I would also convert Subject to a factor because it identifies subjects rather than measuring a quantity.
 ### ✏️ Use `names_prefix`
 
 Run this chunk:
@@ -69,16 +80,19 @@ head(sleep_long)
 Follow-up:
 
 -   Besides putting each argument on a different line for readability and storing the results, what changed in the code?
+    We added names_prefix = "day_" to remove the prefix from the original column names.
 -   How did this impact how the values are recorded in the `day` column?
+    The day values are now “0”, “1”, “2”, etc., instead of “day_0”, “day_1”, “day_2”, etc. However, day is still a character          variable.
 
 ### ✏️ Plot Reaction Time
 
 Using `sleep_long`, construct a line plot of reaction time vs day for each subject. This will look goofy no matter what you do. Why? HINT: look back at `head(sleep_long)`. What class or type of variables are `Subject` and `day`? What do we *want* them to be?
 
 ```{r}
-
+ggplot(sleep_long, aes(x = day, y = reaction_time, color = Subject)) +
+  geom_line()
 ```
-
+Subject is stored as an integer, and day is stored as a character variable. We want Subject to be a factor so that each subject has a separate line and color, and day to be numeric so that it represents time on the x-axis.
 
 ### ✏️ Plot Subjects Together
 
@@ -100,7 +114,8 @@ head(sleep_long)
 *Now* make a line plot of reaction time by day for each subject. Put these all on the same frame.
 
 ```{r}
-
+ggplot(sleep_long, aes(x = day, y = reaction_time, color = Subject)) +
+  geom_line()
 ```
 
 
@@ -109,7 +124,9 @@ head(sleep_long)
 Make a line plot of reaction time by day for each subject. Put these all on separate frames (one per subject).
 
 ```{r}
-
+ggplot(sleep_long, aes(x = day, y = reaction_time, color = Subject)) +
+  geom_line() +
+  facet_wrap(~ Subject)
 ```
 
 ### ✏️ Summarize Sleep Plots
@@ -119,6 +136,7 @@ Summarize what you learned from the plots. For example:
 -   What's the general relationship between reaction time and sleep?
 -   Is this the same for everybody? What differs?
 
+In general, reaction times increase as the number of days of sleep restriction increases, meaning that subjects respond more slowly. However, the pattern differs across subjects. Subjects 308 and 337 show large increases, while subjects 309 and 335 show relatively little overall change. Some subjects, such as 332, also have large day-to-day fluctuations.
 
 
 ### ✏️ Pivot Wider
@@ -128,9 +146,9 @@ Make the data *wide* again, with each day becoming its own column.
 Adjust the code below. What don't you like about the column labels?
 
 ```{r}
-# sleep_long |>
-#   pivot_wider(names_from = ___, values_from = ___) |>
-#   head()
+sleep_long |>
+  pivot_wider(names_from = day, values_from = reaction_time) |>
+  head()
 ```
 
 ### ✏️ Name Wide Columns
@@ -138,9 +156,9 @@ Adjust the code below. What don't you like about the column labels?
 Using your intuition, adjust your code from ✏️ Pivot Wider to name the reaction time columns "day_0", "day_1", etc.
 
 ```{r}
-# sleep_long |>
-#   pivot_wider(names_from = ___, values_from = ___, names_prefix = "___") |>
-#   head()
+sleep_long |>
+  pivot_wider(names_from = day, values_from = reaction_time, names_prefix = "day_") |>
+  head()
 ```
 
 
@@ -165,15 +183,20 @@ In using this data, you'll need to determine if and when the data needs to be re
 Construct and summarize a plot of how a song's Billboard ranking its 2nd week on the chart (y-axis) is related to its ranking the 1st week on the charts (x-axis). Add a reference line `geom_abline(intercept = 0, slope = 1)`. Since a ranking of 1 is the top of the chart, songs *above* this line *dropped* in the rankings from the 1st to 2nd week, and songs *below* it *improved*.
 
 ```{r}
-
+ggplot(billboard, aes(x = wk1, y = wk2)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1)
 ```
+There is a positive association between week 1 and week 2 rankings. Most points are below the reference line, meaning that most songs shown improved their rankings from week 1 to week 2. Only a few songs dropped in the rankings.
 
 ### ✏️ Find Dropping Songs
 
 Use your wrangling tools to identify *which* songs are those above the line in ✏️ Plot Week 2 vs Week 1, i.e. with rankings that got worse (a bigger number) from week 1 to week 2.
 
 ```{r}
-
+billboard |>
+  filter(wk2 > wk1) |>
+  select(artist, track, wk1, wk2)
 ```
 
 ### ✏️ Build `nov_1999`
@@ -185,10 +208,12 @@ Define a new dataset, `nov_1999`, which:
 
 ```{r}
 # Define nov_1999
-
+nov_1999 <- billboard |>
+  filter(date.entered == "1999-11-06") |>
+  select(-track, -date.entered)
 
 # Confirm that nov_1999 has 2 rows (songs) and 77 columns
-
+dim(nov_1999)
 
 ```
 
@@ -197,15 +222,28 @@ Define a new dataset, `nov_1999`, which:
 Create and discuss a visualization of the rankings (y-axis) over time (x-axis) for the 2 songs in `nov_1999`. There are hints below (if you scroll), but you're encouraged to play around and use as few hints as possible.
 
 ```{r}
+nov_long <- nov_1999 |>
+  pivot_longer(
+    cols = starts_with("wk"),
+    names_to = "week",
+    names_prefix = "wk",
+    values_to = "ranking"
+  ) |>
+  mutate(week = as.numeric(week))
 
+head(nov_long)
 ```
+```{r}
+ggplot(nov_long, aes(x = week, y = ranking, color = artist)) +
+  geom_line()
+```
+
 
 Hints:
 
 -   Should you first pivot wider or longer?
 -   Once you pivot, the week number is turned into a character variable. How can you change it to a number?
-
-
+Both songs initially improved in ranking and later declined. Faith Hill’s song reached about No. 2 and stayed near the top for many weeks, while Counting Crows’ song peaked at about No. 28. Faith Hill’s song also remained on the chart much longer—over 50 weeks compared with about 20 weeks for Counting Crows’ song.
 
 ## Daily Show
 
