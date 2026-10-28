@@ -1,0 +1,53 @@
+---
+title: "screen_time_v1"
+---
+```{r}
+screen_time <- read.csv(file.choose())
+View(screen_time)
+```
+
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+screen_time$plot_date <- as.Date(
+  screen_time$date,
+  format = "%m/%d/%Y"
+)
+```
+
+```{r}
+ggplot(screen_time,
+       aes(x = plot_date, y = minutes, fill = app)) +
+  geom_col() +
+  scale_x_date(
+    date_breaks = "1 day",
+    date_labels = "%m/%d"
+  ) +
+  labs(
+    title = "My Screen Time Across Five Apps",
+    subtitle = "October 12–25, 2026",
+    x = "Date",
+    y = "Daily usage (minutes)",
+    fill = "App",
+    caption = "Jiwei | Source: Apple Screen Time"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+```{r}
+ggsave(
+  filename = "screen_time_v1.png",
+  width = 10,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+```
+
+
