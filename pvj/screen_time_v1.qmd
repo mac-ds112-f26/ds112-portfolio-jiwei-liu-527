@@ -1,16 +1,38 @@
 ---
-title: "screen_time_v1"
+title: "My Screen Time Across Five Apps"
+subtitle: "Personal Visualization Journey · Version 1"
+author: "Jiwei"
+date: "2026-10-28"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "Contents"
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+execute:
+  message: false
 ---
+
+## Research Question
+
+How does my daily usage of five apps vary over two weeks?
+
+## Data
+
+I recorded daily usage of Xiaohongshu, Fanqie Novel, QQ, Douyin, and WeChat from October 12 to October 25, 2026.
+
+The dataset contains 70 observations. Each observation represents one app on one day. Usage is measured in minutes.
+
+Source: Apple Screen Time.
+
 ```{r}
-screen_time <- read.csv(file.choose())
-View(screen_time)
+screen_time <- read.csv("screen_time.csv")
 ```
-
-
 ```{r}
 library(ggplot2)
 ```
-
 ```{r}
 screen_time$plot_date <- as.Date(
   screen_time$date,
@@ -18,6 +40,7 @@ screen_time$plot_date <- as.Date(
 )
 ```
 
+## Visualization
 ```{r}
 ggplot(screen_time,
        aes(x = plot_date, y = minutes, fill = app)) +
