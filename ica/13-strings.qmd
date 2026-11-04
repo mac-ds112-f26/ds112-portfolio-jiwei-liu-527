@@ -13,6 +13,8 @@ If you want to learn how to scrape data, take COMP/STAT 212, Intermediate Data S
 
 ```{r}
 courses <- read.csv("https://mac-stat.github.io/data/registrar.csv")
+library(tidyverse)
+library(ggplot2)
 
 # Check it out
 head(courses)
@@ -23,9 +25,9 @@ Use our more familiar wrangling tools to warm up.
 ```{r}
 # Construct a table that indicates the number of classes offered in each day/time slot
 # Print only the 6 most popular time slots
-
-
-
+courses |>
+  count(days, time, sort = TRUE) |>
+  slice_head(n = 6)
 ```
 
 
@@ -42,7 +44,17 @@ So that we can analyze it later, we want to wrangle the `courses` data:
 Store this as `courses_clean` so that you can use it later.
 
 ```{r}
+courses_clean <- courses |>
+  separate(avail_max, into = c("avail", "max"), sep = "/") |>
+  mutate(
+    avail = as.numeric(avail),
+    max = as.numeric(max),
+    enroll = max - avail
+  ) |>
+  separate(number, into = c("dept", "number", "section"),
+         sep = "[ -]")
 
+head(courses_clean)
 ```
 
 
@@ -52,7 +64,9 @@ Store this as `courses_clean` so that you can use it later.
 Using `courses_clean`, identify the 6 departments that offered the most sections.
 
 ```{r}
-
+courses_clean |>
+  count(dept, sort = TRUE) |>
+  slice_head(n = 6)
 ```
 
 
@@ -61,7 +75,12 @@ Using `courses_clean`, identify the 6 departments that offered the most sections
 Using `courses_clean`, identify the 6 departments with the longest average course titles.
 
 ```{r}
-
+courses_clean |>
+  mutate(title_length = str_length(name)) |>
+  group_by(dept) |>
+  summarize(avg_length = mean(title_length)) |>
+  arrange(desc(avg_length)) |>
+  slice_head(n = 6)
 ```
 
 
@@ -71,7 +90,8 @@ Using `courses_clean`, identify the 6 departments with the longest average cours
 Get a subset of `courses_clean` that only includes courses taught by Alicia Johnson.
 
 ```{r}
-
+courses_clean |>
+  filter(str_detect(instructor, "Alicia Johnson"))
 ```
 
 ### ✏️ Build `stat` Dataset
@@ -90,7 +110,17 @@ Create a new dataset from `courses_clean`, named `stat`, that only includes STAT
 -   The result should have 19 rows and 4 columns.
 
 ```{r}
+stat <- courses_clean |>
+  filter(dept == "STAT") |>
+  mutate(
+    name = str_remove(name, "Introduction to "),
+    name = str_replace(name, "Statistical", "Stat"),
+    start_time = str_extract(time, "^[^-]+")
+  ) |>
+  select(number, name, start_time, enroll)
 
+stat
+dim(stat)
 ```
 
 
@@ -110,8 +140,16 @@ In the next exercises, we'll dig into enrollments. Let's get the data ready for 
 Save the results as `enrollments` (don't overwrite `courses_clean`).
 
 ```{r}
+enrollments <- courses_clean |>
+  filter(
+    !dept %in% c("PE", "INTD"),
+    !(dept == "MUSI" & as.numeric(number) < 100),
+    !(dept == "THDA" & as.numeric(number) < 100),
+    !str_detect(section, "L")
+  )
 
-
+head(enrollments)
+dim(enrollments)
 ```
 
 
@@ -121,7 +159,28 @@ Save the results as `enrollments` (don't overwrite `courses_clean`).
 Explore enrollments by department. *You* decide what research questions to focus on. Use both visual and numerical summaries.
 
 ```{r}
+enrollments |>
+  group_by(dept) |>
+  summarize(
+    avg_enroll = mean(enroll, na.rm = TRUE),
+    n_sections = n()
+  ) |>
+  arrange(desc(avg_enroll)) |>
+  slice_head(n = 10)
 
+enrollments |>
+  group_by(dept) |>
+  summarize(avg_enroll = mean(enroll, na.rm = TRUE)) |>
+  slice_max(avg_enroll, n = 10) |>
+  ggplot(aes(x = reorder(dept, avg_enroll),
+             y = avg_enroll)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Departments by Average Enrollment",
+    x = "Department",
+    y = "Average Enrollment"
+  )
 ```
 
 
@@ -134,20 +193,20 @@ To comment/uncomment several lines of code at once, highlight them then click <k
 :::
 
 ```{r}
-# enrollments |>
-#   filter(dept %in% c("STAT", "COMP"), number == 112, section == "01")
+enrollments |>
+  filter(dept %in% c("STAT", "COMP"), number == 112, section == "01")
 ```
 
 Notice that these are the exact same section! In order to not double count an instructor's enrollments, we can keep only the courses that have `distinct()` *combinations* of `days, time, instructor` values.  Uncomment the code lines in the chunk below.
 
 ```{r}
-# enrollments_2 <- enrollments |>
-#   distinct(days, time, instructor, .keep_all = TRUE)
+enrollments_2 <- enrollments |>
+  distinct(days, time, instructor, .keep_all = TRUE)
 
 # NOTE: By default this keeps the first department alphabetically
 # That's fine because we won't use this to analyze department enrollments!
-# enrollments_2 |>
-#   filter(instructor == "Brianna Heggeseth", name == "Introduction to Data Science")
+enrollments_2 |>
+  filter(instructor == "Brianna Heggeseth", name == "Introduction to Data Science")
 ```
 
 *Now*, explore enrollments by instructor. *You* decide what research questions to focus on. Use both visual and numerical summaries.
@@ -155,7 +214,28 @@ Notice that these are the exact same section! In order to not double count an in
 CAVEAT: The above code doesn't deal with *co-taught* courses that have more than one instructor. Thus instructors that co-taught are recorded as a pair, and their co-taught enrollments aren't added to their total enrollments. This is tough to get around with how the data were scraped as the instructor names are smushed together, not separated by a comma!
 
 ```{r}
+enrollments_2 |>
+  group_by(instructor) |>
+  summarize(
+    total_enroll = sum(enroll, na.rm = TRUE),
+    n_sections = n()
+  ) |>
+  arrange(desc(total_enroll)) |>
+  slice_head(n = 10)
 
+enrollments_2 |>
+  group_by(instructor) |>
+  summarize(total_enroll = sum(enroll, na.rm = TRUE)) |>
+  slice_max(total_enroll, n = 10) |>
+  ggplot(aes(x = reorder(instructor, total_enroll),
+             y = total_enroll)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Instructors by Total Enrollment",
+    x = "Instructor",
+    y = "Total Enrollment"
+  )
 ```
 
 
@@ -167,7 +247,20 @@ CAVEAT: The above code doesn't deal with *co-taught* courses that have more than
 Make a bar plot showing the number of night courses by day of the week. Use `courses_clean`.
 
 ```{r}
-
+courses_clean |>
+  mutate(
+    start_time = str_trim(str_extract(time, "^[^-]+")),
+    is_night = str_detect(start_time, "6:|7:|8:|9:")
+  ) |>
+  filter(is_night, str_detect(time, "pm")) |>
+  count(days) |>
+  ggplot(aes(x = days, y = n)) +
+  geom_col() +
+  labs(
+    title = "Number of Night Courses by Day",
+    x = "Day",
+    y = "Number of Courses"
+  )
 
 ```
 
