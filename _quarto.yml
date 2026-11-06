@@ -63,6 +63,7 @@ book:
     - part: "Personal Viz Journey"
       chapters:
       - pvj/pvj-01.qmd
+      - pvj/screen_time_v1.qmd
 
     - part: "TidyTuesday"
       chapters:
