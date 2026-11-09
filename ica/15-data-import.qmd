@@ -28,6 +28,10 @@ To this end, check out where we originally got our IMDB data:
 
 After visiting that website, take some quick notes here on the data *source* and *creator*.
 
+Source: Kaggle, “TMDB 5000 Movie Dataset”
+(https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata).
+
+Creator: The Movie Database (TMDb).
 
 ### ✏️ Use Absolute Path
 
@@ -49,7 +53,10 @@ Putting this together, use `read_csv()` with the appropriate absolute file path 
 
 ```{r}
 library(tidyverse)
-# imdb_messy <- read_csv("___")
+imdb_path <- normalizePath(file.choose())
+imdb_path
+
+imdb_messy <- read_csv(imdb_path)
 ```
 
 ### ✏️ Check Working Directory
@@ -76,7 +83,9 @@ Since our .qmd analysis and .csv data live in the same project, we don't have to
 Putting this together, use `read_csv()` with the appropriate relative file path to import your data into RStudio. Save this as `imdb_temp` (`temp` for "temporary"). Convince yourself that this worked, i.e. you get the same dataset as `imdb_messy`.
 
 ```{r}
-#imdb_temp <- read_csv("___")
+imdb_temp <- read_csv("../data/imdb_5000_messy.csv")
+
+isTRUE(all.equal(imdb_messy, imdb_temp, check.attributes = FALSE))
 ```
 
 ::: {.callout-tip title="File Paths"}
@@ -95,7 +104,7 @@ The "data import cheat sheet" at the top of this qmd, or Google, are handy resou
 
 ```{r}
 # Try importing only the first 5 rows
-# read_csv("___", n_max = ___)
+read_csv("../data/imdb_5000_messy.csv", n_max = 5)
 ```
 
 ::: {.callout-tip title="Commenting/Uncommenting Code"}
@@ -116,9 +125,9 @@ Open `imdb_messy` in the spreadsheet-like viewer by typing `View(imdb_messy)` in
 Do a quick `summary()` of each variable in the dataset. *One* way to do this is below:
 
 ```{r}
-# imdb_messy |>
-#   mutate(across(where(is.character), as.factor)) |>  # convert characters to factors in order to summarize
-#   summary()
+imdb_messy |>
+  mutate(across(where(is.character), as.factor)) |>
+  summary()
 ```
 
 Follow-up:
@@ -127,7 +136,11 @@ Follow-up:
 -   What type of info is provided on categorical variables?
 -   What stands out to you in these summaries? Is there anything you'd need to clean before using this data?
 
+1. For quantitative variables, summary() provides the minimum, first quartile, median, mean, third quartile, maximum, and the number of missing values.
 
+2. For categorical variables, it provides category counts, grouping less frequent categories into “(Other),” and reports missing values.
+
+3. The color variable has inconsistent labels, including “Color,” “color,” and “COLOR,” as well as “B&W” and “Black and White.” These should be combined into consistent categories. Several variables also have missing values that need attention before analysis.
 
 ### ✏️ Inspect `color`
 
@@ -137,8 +150,10 @@ If you didn't already in ✏️ Summarize Variables, check out the `color` varia
 -   More specifically, what different categories does the `color` variable take, and how many movies fall into each of these categories?
 
 ```{r}
-
+imdb_messy |>
+  count(color)
 ```
+The same categories have inconsistent labels. “COLOR,” “Color,” and “color” should be combined into “Color.” “B&W” and “Black and White” should be combined into “Black_White.” There are also 19 missing values.
 
 
 
@@ -147,6 +162,8 @@ If you didn't already in ✏️ Summarize Variables, check out the `color` varia
 When working with categorical variables like `color`, the categories must be "clean", i.e. consistent and in the correct format. Let's make that happen.
 
 We *could* open the .csv file in, say, Excel or Google sheets, clean up the `color` variable, save a clean copy, and then reimport that into RStudio. BUT that would be the wrong thing to do. Why is it important to use R code, which we then save inside this qmd, to clean our data?
+
+Cleaning data with R code makes the process reproducible and transparent. It preserves the original data and allows us to check, modify, and repeat the cleaning steps.
 
 ### ✏️ Recode with Factors
 
@@ -157,7 +174,17 @@ Let's use R code to change the `color` variable so that it appropriately combine
 Store your results in `imdb_temp` (don't overwrite `imdb_messy`). To check your work, print out a `count()` table of the `color` variable in `imdb_temp`.
 
 ```{r}
+imdb_temp <- imdb_messy |>
+  mutate(color = fct_recode(
+    color,
+    "Color" = "COLOR",
+    "Color" = "color",
+    "Black_White" = "B&W",
+    "Black_White" = "Black and White"
+  ))
 
+imdb_temp |>
+  count(color)
 ```
 
 ### ✏️ Recode with Strings
@@ -167,7 +194,19 @@ Repeat ✏️ Recode with Factors using one of our string functions from the **S
 `str_replace()`, `str_replace_all()`, `str_to_lower()`, `str_sub()`, `str_length()`, `str_detect()`
 
 ```{r}
+imdb_temp <- imdb_messy |>
+  mutate(
+    color = str_to_lower(color),
+    color = str_replace_all(
+      color,
+      c("^color$" = "Color",
+        "^b&w$" = "Black_White",
+        "^black and white$" = "Black_White")
+    )
+  )
 
+imdb_temp |>
+  count(color)
 ```
 
 
@@ -186,29 +225,35 @@ Let's consider the first 2 questions in this exercise.
 As a first step, let's simply understand the *volume* of NAs. Specifically:
 
 ```{r}
-# Count the total number of rows in imdb_messy
-#___(imdb_messy)
+# Count the total number of rows
+nrow(imdb_messy)
 
-# Then count the number of NAs in each column
-#colSums(is.na(imdb_messy))
+# Count missing values in each column
+colSums(is.na(imdb_messy))
 
-# Then count the number of NAs in a specific column
-#imdb_messy |>
-#  ___(___(is.na(actor_1_facebook_likes)))
+# Count missing actor_1_facebook_likes values
+imdb_messy |>
+  summarize(missing_likes = sum(is.na(actor_1_facebook_likes)))
 ```
 
 ### ✏️ Explain Missingness
 
 As a second step, let's think about *why* some values are missing. Study the individual observations with NAs carefully. Why do you think they are missing? Are certain films more likely to have more NAs than others?
 
+Missing values may occur because information was not recorded or because a variable does not apply to a film. For example, documentaries may have missing actor information because they feature real people rather than actors.
+
 ### ✏️ Find Missing Likes
 
 Consider a more specific example. Obtain a dataset of movies that are missing data on `actor_1_facebook_likes`. Then explain why you think there are NAs. HINT: `is.na(___)`
 
 ```{r}
+missing_likes <- imdb_messy |>
+  filter(is.na(actor_1_facebook_likes))
 
+missing_likes |>
+  select(movie_title, genres, actor_1_name, actor_1_facebook_likes)
 ```
-
+All seven films are documentaries and also have missing actor_1_name values. This suggests that actor Facebook likes may not apply because these films do not have a listed lead actor.
 
 
 ### ✏️ Average Duration
@@ -222,19 +267,25 @@ Next, let's think about what to *do* about the missing values. There is no perfe
 Calculate the average duration of a film. THINK: How can we deal with the NA's?
 
 ```{r}
-
+imdb_messy |>
+  summarize(mean_duration = mean(duration, na.rm = TRUE))
 ```
 
 Follow-up:
 
 How are the NAs dealt with here? Did we have to create and save a new dataset in order to do this analysis?
 
+The missing durations are excluded from the mean using na.rm = TRUE. We did not need to create or save a new dataset.
+
 ### ✏️ Try `drop_na()`
 
 Try out the `drop_na()` function:
 
 ```{r}
-# imdb_temp <- drop_na(imdb_messy)
+imdb_temp <- drop_na(imdb_messy)
+
+nrow(imdb_temp)
+nrow(imdb_messy) - nrow(imdb_temp)
 ```
 
 Follow-up questions:
@@ -242,6 +293,12 @@ Follow-up questions:
 -   What did `drop_na()` do? How many data points are left?
 -   In what situations might this function be a good idea?
 -   In what situations might this function be a bad idea?
+
+drop_na() removes every row containing any missing value.
+
+It can be useful when complete information on all variables is required and only a small number of rows are removed.There are 3756 films left, so 1287 rows were removed.
+
+It can be a bad idea when many rows are lost or when values are missing in variables we do not need. It may also introduce bias if the removed films differ systematically from those retained.
 
 ### ✏️ Keep Complete Cases
 
@@ -259,15 +316,36 @@ Follow-up:
 -   How many movies remain in your new dataset? Hence why this is better than using the dataset from ✏️ Try `drop_na()`?
 
 ```{r}
+imdb_complete <- imdb_messy |>
+  drop_na(duration, color) |>
+  mutate(color = fct_recode(
+    color,
+    "Color" = "COLOR",
+    "Color" = "color",
+    "Black_White" = "B&W",
+    "Black_White" = "Black and White"
+  ))
 
+nrow(imdb_complete)
+
+ggplot(imdb_complete, aes(x = duration, fill = color)) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Duration (minutes)", fill = "Color")
 ```
+The new dataset contains 5010 films, compared with 3756 when dropping rows with any missing value. It retains 1254 more films because we only require complete information on duration and color. Missing values in unrelated variables do not affect this analysis.
 
 ### ✏️ Replace NAs
 
 In some cases, missing data is more *non*-data than *unknown* data. For example, the films with NAs for `actor_1_facebook_likes` actually have *0* Facebook likes--they don't even have actors! In these cases, we can *replace* the NAs with a 0. Use the `replace_na()` function to create a new dataset (`imdb_temp`) that replaces the NAs in `actor_1_facebook_likes` with 0. You'll have to check out the help file for this function.
 
 ```{r}
+imdb_temp <- imdb_messy |>
+  mutate(
+    actor_1_facebook_likes = replace_na(actor_1_facebook_likes, 0)
+  )
 
+imdb_temp |>
+  summarize(missing_likes = sum(is.na(actor_1_facebook_likes)))
 ```
 
 
