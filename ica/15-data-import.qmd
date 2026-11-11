@@ -53,9 +53,8 @@ Putting this together, use `read_csv()` with the appropriate absolute file path 
 
 ```{r}
 library(tidyverse)
-imdb_path <- normalizePath(file.choose())
-imdb_path
 
+imdb_path <- "../data/imdb_5000_messy.csv"
 imdb_messy <- read_csv(imdb_path)
 ```
 
