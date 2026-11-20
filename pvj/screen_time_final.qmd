@@ -113,11 +113,14 @@ screen_time_plot <- ggplot(
     expand = expansion(mult = c(0, 0.12))
   ) +
   labs(
-    title = paste0("My Screen Time Peaked at ", max(high_days$total), " Minutes"),
-    subtitle = "Daily totals across five apps | October 12–25, 2026",
+    title = "Daily Totals Across Five Apps | October 12–25, 2026",
+    subtitle = paste0(
+      "My screen time peaked at 731 minutes on October 12, ",
+      "nearly twice my daily average."
+    ),
     x = "Date",
     y = "Screen time (minutes)",
-    fill = "App",
+    fill = NULL,
     caption = "Jiwei | November 18, 2026 | Source: Apple Screen Time"
   ) +
   theme_minimal(base_size = 13) +
