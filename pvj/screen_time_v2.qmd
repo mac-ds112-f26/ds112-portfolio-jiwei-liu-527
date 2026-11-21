@@ -1,0 +1,177 @@
+---
+title: "My Screen Time Across Five Apps"
+subtitle: "Personal Visualization Journey · Version 2"
+author: "Jiwei"
+date: "2026-11-11"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "Contents"
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+execute:
+  message: false
+---
+
+## Research Question
+
+How does my daily usage of five apps vary over two weeks?
+
+## Data
+
+I recorded daily usage of Xiaohongshu, Fanqie Novel, QQ, Douyin, and WeChat from October 12 to October 25, 2026.
+
+The dataset contains 70 observations. Each observation represents one app on one day. Usage is measured in minutes.
+
+Source: Apple Screen Time.
+
+```{r}
+screen_time <- read.csv("screen_time.csv")
+```
+```{r}
+library(ggplot2)
+```
+```{r}
+screen_time$plot_date <- as.Date(
+  screen_time$date,
+  format = "%m/%d/%Y"
+)
+```
+
+## Visualization
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(lubridate)
+
+# Import data
+screen_time <- read_csv("screen_time.csv") |>
+  mutate(
+    plot_date = mdy(date)
+  )
+
+# Calculate total usage for each day
+daily_totals <- screen_time |>
+  group_by(plot_date) |>
+  summarize(
+    total = sum(minutes, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Calculate average daily screen time
+avg_time <- mean(daily_totals$total)
+
+# Identify the three highest-usage days
+high_days <- daily_totals |>
+  slice_max(total, n = 3, with_ties = FALSE)
+
+# Define the original app colors
+app_colors <- c(
+  "Douyin" = "#FF6961",
+  "Fanqie Novel" = "#A3AD00",
+  "QQ" = "#00C78C",
+  "WeChat" = "#00BFEA",
+  "Xiaohongshu" = "#E74DEB"
+)
+
+# Create the revised visualization
+ggplot(
+  screen_time,
+  aes(x = plot_date, y = minutes, fill = app)
+) +
+  geom_col(width = 0.85) +
+
+  # Average daily screen time reference line
+  geom_hline(
+    yintercept = avg_time,
+    linetype = "dashed",
+    color = "gray30",
+    linewidth = 0.7
+  ) +
+
+  # Highlight the three highest-usage days
+  geom_point(
+    data = high_days,
+    aes(x = plot_date, y = total),
+    inherit.aes = FALSE,
+    color = "black",
+    size = 2.5
+  ) +
+
+  # Show total minutes on these days
+  geom_text(
+    data = high_days,
+    aes(
+      x = plot_date,
+      y = total,
+      label = paste0(total, " min")
+    ),
+    inherit.aes = FALSE,
+    vjust = -0.9,
+    size = 3.2
+  ) +
+
+  scale_fill_manual(values = app_colors) +
+
+  scale_x_date(
+    date_breaks = "2 days",
+    date_labels = "%m/%d",
+    limits = as.Date(c("2026-10-11", "2026-10-26"))
+  ) +
+
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+
+  labs(
+    title = "My Screen Time Across Five Apps",
+    subtitle = "October 12–25, 2026",
+    x = "Date",
+    y = "Daily Usage (minutes)",
+    fill = "App",
+    caption = paste0(
+      "Dashed line = daily average (",
+      round(avg_time),
+      " min) | Dots = 3 highest-usage days\n",
+      "Jiwei | Source: Apple Screen Time"
+    )
+  ) +
+
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 15
+    ),
+    plot.subtitle = element_text(
+      size = 11
+    ),
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    ),
+    plot.caption = element_text(
+      hjust = 1,
+      size = 9
+    ),
+    legend.position = "right"
+  )
+```
+
+```{r}
+ggsave(
+  filename = "screen_time_v2.png",
+  width = 10,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+```
+
+
+
+
